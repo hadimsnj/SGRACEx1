@@ -1,4 +1,4 @@
-GFADES sources and data
+SGRACE sources and data
 
 Steps to run full implementation with a base design with one thread and 2 compute units done with Linux Ubuntu.
 
@@ -111,8 +111,5 @@ Future work invoves offloading the backward path calculations. The training loop
 
  
 
-If you find this repository useful for your research, please, consider citing:
-
-Jose Nunez-Yanez. 2023. Accelerating Graph Neural Networks in Pytorch with HLS and Deep Dataflows. In Applied Reconfigurable Computing. Architectures, Tools, and Applications: 19th International Symposium, ARC 2023, Cottbus, Germany, September 27–29, 2023, Proceedings. Springer-Verlag, Berlin, Heidelberg, 131–145. https://doi.org/10.1007/978-3-031-42921-7_9
 
 
