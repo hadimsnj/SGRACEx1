@@ -14,7 +14,7 @@ Create a directory like this and save sgrace.py and config.py in it.
 2. sgrace.py loads a FPGA bit file called gat_all_unsigned.bit. 
 Make sure you move the provided  bit and hwh files to the overlays directory with the correct name.
 
-3. The notebook is set to training=0 so only inference will be run. 
+3. If the notebook is set to training=0 only inference will be run. Set training to 1 to perform training as well. 
 
 The notebook is set to load model parameters from a file "models/model_photo_8bit.ptx". 
 Make sure you store the provided model to the "models" directory.
