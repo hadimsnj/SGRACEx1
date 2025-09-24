@@ -8,8 +8,146 @@ from pynq import get_rails, DataRecorder
 from scipy.sparse import coo_matrix
 from torch_geometric.utils import add_remaining_self_loops,add_self_loops,sort_edge_index,degree
 
-
 import config
+
+
+#def quantization(x, s, z, alpha_q, beta_q):
+
+def quantization(x, s, z, alpha_q, beta_q):
+
+    x_q = np.round(1 / s * x + z, decimals=0)
+    x_q = np.clip(x_q, a_min=alpha_q, a_max=beta_q)
+    
+  
+    return x_q
+
+
+def quantization_b(x, s, z, alpha_q, beta_q):
+
+    x_q = (1 / s * x + z)
+    x_q[x_q < 0] = -1
+    x_q[x_q >= 0] = 1
+    return x_q
+
+
+def quantization_uqbits(x, s, z, qbits):
+
+    alpha_q = 0
+    beta_q = (2**(qbits) - 1)
+    x_q = quantization(x, s, z, alpha_q, beta_q)
+    #x_q = x_q.astype(np.int8)
+
+    #print(x_q.shape)
+    return x_q
+
+def quantization_qbits(x, s, z, qbits):
+
+    if (qbits==1):
+     alpha_q = -1
+     beta_q = 1
+     x_q = quantization_b(x, s, z, alpha_q, beta_q)
+    else:
+     alpha_q = (-2**(qbits - 1) + 1)
+     beta_q = (2**(qbits - 1) - 1)
+     x_q = quantization(x, s, z, alpha_q, beta_q)
+
+    #print(x_q.shape)
+    return x_q
+
+
+def generate_quantization_constants(alpha, beta, alpha_q, beta_q):
+
+    # Affine quantization mapping
+    #this beta_o and alpha_o take into account that during training the integer values are inserted in a fractional pipeline
+    #This pipeline has 7 bit integer and 25 bit fractional (total 32). If the values are inserted with an alignment of 18 and have 8 bits width
+    # then they become x.xxxxxxx like if they are divided by (2**(8-1) and this effect must be removed during dequant.
+    
+
+    beta_o = beta_q/(2**(frac_bits-f_align))
+    alpha_o = alpha_q/(2**(frac_bits-f_align))
+   
+ 
+    s_o = (beta - alpha) / (beta_o - alpha_o)
+
+    #print('quantization Scale output',s_o)
+    
+    s = (beta - alpha) / (beta_q - alpha_q)
+    
+    
+    z = int((beta * alpha_q - alpha * beta_q) / (beta - alpha))
+    #print('quantization Scale ',s)
+    #print('Zero point ',z)
+
+    return s_o,s, z
+
+
+def generate_quantization_uqbits_constants(alpha, beta,qbits):
+
+    alpha_q = 0
+    beta_q = (2**(qbits) - 1)
+    
+    #print(alpha_q)
+    #print(beta_q)
+
+    s_o,s, z = generate_quantization_constants(alpha=alpha,
+                                           beta=beta,
+                                           alpha_q=alpha_q,
+                                           beta_q=beta_q)
+    
+
+    return s_o,s, z
+
+
+def generate_quantization_qbits_constants(alpha, beta,qbits):
+
+    if(qbits==1): 
+     alpha_q = -1
+     beta_q = 1
+    else:
+     alpha_q = ((-2**(qbits - 1) + 1))
+     beta_q = (2**(qbits - 1) - 1) 
+        
+    #print(alpha_q)
+    #print(beta_q)
+    
+
+    s_o,s, z = generate_quantization_constants(alpha=alpha,
+                                           beta=beta,
+                                           alpha_q=alpha_q,
+                                           beta_q=beta_q)
+   
+    
+    #print(s)
+    #print(z)
+
+    return s_o,s, z
+
+
+def fake_quantization(x, s, z, deq, alpha_q, beta_q):
+
+    x_r = np.round(1 / s * x + z, decimals=0)
+    x_q = np.clip(x_r, a_min=alpha_q, a_max=beta_q)
+
+    x_q = x_q*deq #back to float
+    
+    return x_q
+
+
+def quantization_fbits(x, s, z, deq, qbits):
+
+    if (qbits==1):
+     alpha_q = -1
+     beta_q = 1
+     x_q = fake_quantization_b(x, s, z, deq, alpha_q, beta_q)
+    else:
+     alpha_q = (-2**(qbits - 1) + 1)
+     #alpha_q = (-2**(qbits - 1)) #use the lowest possible negative value as well
+     beta_q = (2**(qbits - 1) - 1)
+     x_q = fake_quantization(x, s, z, deq, alpha_q, beta_q)
+
+    #print(x_q.shape)
+    return x_q
+
 
 class RPYNQ(torch.autograd.Function):
     """Both forward and backward are static methods."""
@@ -71,10 +209,14 @@ class FPYNQ_GAT(torch.autograd.Function):
          #if (config.profiling == 1):
          # rmult = time.time()
 
-         #print("active layer")
-         #print(config.layern)
+         global layern
+         #print("deq_o and active layer")
+         #print(deq_o)
+         #print(layern)
 
-         if (config.layern == 1):
+
+
+         if (layern == 1):
           my_ip.register_map.scale_fea = scale_fea #2 #scale fea
           int32bits = np.asarray(deq_o, dtype=np.float32).view(np.int32).item() 
           my_ip.register_map.deq_factor = int32bits
@@ -85,7 +227,7 @@ class FPYNQ_GAT(torch.autograd.Function):
           qsw = 1/w_s
           int32bits = np.asarray(qsw, dtype=np.float32).view(np.int32).item() 
           my_ip.register_map.quantization_scale_w = int32bits
-          config.layern = 2
+          layern = 2
          else:
           my_ip.register_map.scale_fea = scale_fea2 #2 #scale fea
           int32bits = np.asarray(deq_o2, dtype=np.float32).view(np.int32).item() 
@@ -97,7 +239,7 @@ class FPYNQ_GAT(torch.autograd.Function):
           qsw = 1/w_s2
           int32bits = np.asarray(qsw, dtype=np.float32).view(np.int32).item() 
           my_ip.register_map.quantization_scale_w = int32bits   
-          config.layern = 1      
+          layern = 1      
             
          qsa = 1/a_s
          int32bits = np.asarray(qsa, dtype=np.float32).view(np.int32).item() 
@@ -285,6 +427,9 @@ class FPYNQ_GAT(torch.autograd.Function):
 
           input = input.float()
         
+          if(config.fake_quantization==1):
+           input = quantization_fbits(input, f_s, f_z, f_s, config.w_qbits)
+
           #print(adj.shape)
           #print(input.shape)
           #print(weights.shape)
@@ -295,7 +440,13 @@ class FPYNQ_GAT(torch.autograd.Function):
         
         
           tmult = time.time() 
-                          
+         
+          if(config.fake_quantization==1):
+           #print("weights before quant") 
+           #print(weights) 
+           weights = quantization_fbits(weights, w_s, w_z, w_s, config.w_qbits) 
+           #print("weights after quant")  
+           #print(weights)              
         
           #Wh = torch.mm(input, weights[i]) # h.shape: (N, in_features), Wh.shape: (N, out_features)
           #e = prepare_attentional_mechanism_input(Wh,attention[i],out_features)
@@ -304,12 +455,18 @@ class FPYNQ_GAT(torch.autograd.Function):
           #print("attention")
           #print(attention[i])
      
+          adj_d = adj.to_dense()  
+          if(config.fake_quantization==1): 
+           attention = quantization_fbits(attention, w_s, w_z, w_s, config.w_qbits) 
+           adj_d = quantization_fbits(adj_d, a_s, a_z, a_s, config.w_qbits) 
+           adj = adj_d.to_sparse()
+
           e = prepare_attentional_mechanism_input(Wh,attention,out_features)
           e = self.leakyrelu(e)
           #print("size of e[i]")
           #print(e[i].size())
           zero_vec = -9e15*torch.ones_like(e)
-          adj_d = adj.to_dense()  
+          
           attention1 = torch.where(adj_d > 0, e, zero_vec)
           attentions = F.softmax(attention1, dim=1)
           #print('attentions') 
@@ -903,114 +1060,6 @@ class GATConv_SGRACE(Module):
 
 
 
-def quantization(x, s, z, alpha_q, beta_q):
-
-    x_q = np.round(1 / s * x + z, decimals=0)
-    x_q = np.clip(x_q, a_min=alpha_q, a_max=beta_q)
-    
-  
-    return x_q
-
-
-def quantization_b(x, s, z, alpha_q, beta_q):
-
-    x_q = (1 / s * x + z)
-    x_q[x_q < 0] = -1
-    x_q[x_q >= 0] = 1
-    return x_q
-
-
-def quantization_uqbits(x, s, z, qbits):
-
-    alpha_q = 0
-    beta_q = (2**(qbits) - 1)
-    x_q = quantization(x, s, z, alpha_q, beta_q)
-    #x_q = x_q.astype(np.int8)
-
-    #print(x_q.shape)
-    return x_q
-
-def quantization_qbits(x, s, z, qbits):
-
-    if (qbits==1):
-     alpha_q = -1
-     beta_q = 1
-     x_q = quantization_b(x, s, z, alpha_q, beta_q)
-    else:
-     alpha_q = (-2**(qbits - 1) + 1)
-     beta_q = (2**(qbits - 1) - 1)
-     x_q = quantization(x, s, z, alpha_q, beta_q)
-
-    #print(x_q.shape)
-    return x_q
-
-
-def generate_quantization_constants(alpha, beta, alpha_q, beta_q):
-
-    # Affine quantization mapping
-    #this beta_o and alpha_o take into account that during training the integer values are inserted in a fractional pipeline
-    #This pipeline has 7 bit integer and 25 bit fractional (total 32). If the values are inserted with an alignment of 18 and have 8 bits width
-    # then they become x.xxxxxxx like if they are divided by (2**(8-1) and this effect must be removed during dequant.
-    
-
-    beta_o = beta_q/(2**(frac_bits-f_align))
-    alpha_o = alpha_q/(2**(frac_bits-f_align))
-   
- 
-    s_o = (beta - alpha) / (beta_o - alpha_o)
-
-    #print('quantization Scale output',s_o)
-    
-    s = (beta - alpha) / (beta_q - alpha_q)
-    
-    
-    z = int((beta * alpha_q - alpha * beta_q) / (beta - alpha))
-    #print('quantization Scale ',s)
-    #print('Zero point ',z)
-
-    return s_o,s, z
-
-
-def generate_quantization_uqbits_constants(alpha, beta,qbits):
-
-    alpha_q = 0
-    beta_q = (2**(qbits) - 1)
-    
-    #print(alpha_q)
-    #print(beta_q)
-
-    s_o,s, z = generate_quantization_constants(alpha=alpha,
-                                           beta=beta,
-                                           alpha_q=alpha_q,
-                                           beta_q=beta_q)
-    
-
-    return s_o,s, z
-
-
-def generate_quantization_qbits_constants(alpha, beta,qbits):
-
-    if(qbits==1): 
-     alpha_q = -1
-     beta_q = 1
-    else:
-     alpha_q = ((-2**(qbits - 1) + 1))
-     beta_q = (2**(qbits - 1) - 1) 
-        
-    #print(alpha_q)
-    #print(beta_q)
-    
-
-    s_o,s, z = generate_quantization_constants(alpha=alpha,
-                                           beta=beta,
-                                           alpha_q=alpha_q,
-                                           beta_q=beta_q)
-   
-    
-    #print(s)
-    #print(z)
-
-    return s_o,s, z
 
 def init_SGRACE():
 
@@ -1027,31 +1076,62 @@ def init_SGRACE():
  global f_align
  global beta_qu
  global scale_fea
+ global layern 
  global deq_o
  global scale_fea2
  global deq_o2
- #global layern #remember layer number active to adjust the parameters 
- #config.layern = 1
- config.layern = 1
+ #remember layer number active to adjust the parameters 
+
+ layern = 1
 
  if(config.w_qbits == 8):
 
   f_align = 0 #8
   beta_qu = 255
 
-  #cora
-  w_max = 0.3 #8 #citeseer/cora
-  w_min = -0.3 #8 #citeseer/cora
-  a_max = 0.5 #cora gcn/gat 8-bit
-  w_max2 = 0.6 #citeseer/cora 4-bit/8-bit gcn/gat
-  w_min2 = -0.6 #citeseer/cora 4-bit/8-bit gcn/gat  
-  f_max2 = 1.0 #cora
-  f_max = 1.0 #cox/ermd/dd/mutag
+  #photo
+  global w_max
+  w_max = 1.0 
+  global w_min
+  w_min = -1.0 
+  global a_max
+  a_max = 1.0 
+  global w_max2
+  w_max2 = 1.0 
+  global w_min2
+  w_min2 = -1.0
+  global f_max2   
+  f_max2 = 4.0 
+  global f_max
+  f_max = 1.0 
+  global a_min
   a_min = 0
+  global f_min
   f_min = 0
+  global f_min2
   f_min2 = 0
   go_max = 0.10
   go_min = -0.10
+
+  #cora
+  #global w_max
+  #w_max = 0.3 #8 #citeseer/cora
+  #global w_min
+  #w_min = -0.3 #8 #citeseer/cora
+  #global a_max
+  #a_max = 0.5 #cora gcn/gat 8-bit
+  #w_max2 = 0.6 #citeseer/cora 4-bit/8-bit gcn/gat
+  #w_min2 = -0.6 #citeseer/cora 4-bit/8-bit gcn/gat  
+  #f_max2 = 1.0 #cora
+  #global f_max
+  #f_max = 1.0 #cox/ermd/dd/mutag
+  #global a_min
+  #a_min = 0
+  #global f_min
+  #f_min = 0
+  #f_min2 = 0
+  #go_max = 0.10
+  #go_min = -0.10
 
   #transformer gat
   #w_max = 1.0 #0.3 #8 #citeseer/cora
@@ -1063,6 +1143,7 @@ def init_SGRACE():
   #f_max = 1.0 #cox/ermd/dd/mutag
   #a_min = 0
   #f_min = 0
+  #f_min2 = 0
   #go_max = 0.10
   #go_min = -0.10
 
@@ -1070,12 +1151,13 @@ def init_SGRACE():
   #w_max = 0.3 #0.3 #8 #citeseer/cora
   #w_min = -0.3 #-0.3 #8 #citeseer/cora
   #a_max = 1.0 #cora gcn/gat 8-bit
-  #w_max2 = 0.3 # 0.6 #citeseer/cora 4-bit/8-bit gcn/gat
-  #w_min2 = -0.3 #-0.6 #citeseer/cora 4-bit/8-bit gcn/gat  
+  #w_max2 = 0.6 # 0.6 #citeseer/cora 4-bit/8-bit gcn/gat
+  #w_min2 = -0.6 #-0.6 #citeseer/cora 4-bit/8-bit gcn/gat  
   #f_max2 = 1.0 #cora
   #f_max = 1.0 #cox/ermd/dd/mutag
   #a_min = 0
   #f_min = 0
+  #f_min2 = 0
   #go_max = 0.10
   #go_min = -0.10
 
@@ -1244,10 +1326,16 @@ def init_SGRACE():
  global internal_quantization 
  #8-bit 
  if (config.w_qbits == 8):   
-    scale_fea = 3 #scale fea
+    #scale_fea = 3 #scale fea
+    #scale_fea2 = 3
+    #deq_o=deq_o*pow(2, 2) #cora 8-bit gcn/gat
+    #deq_o2=deq_o2*pow(2, 2) #2c#cora 8-bit gcn/gat
+
+    #photo
+    scale_fea = 3
     scale_fea2 = 3
-    deq_o=deq_o*pow(2, 2) #cora 8-bit gcn/gat
-    deq_o2=deq_o2*pow(2, 2) #2c#cora 8-bit gcn/gat
+    deq_o=deq_o*pow(2, 1) 
+    deq_o2=deq_o2*pow(2, 1) 
 
     if(config.min_output == 0):
      print("Deq factor ",deq_o)
@@ -1384,4 +1472,4 @@ def init_SGRACE():
  my_ip.register_map.bias_offset_1  = bias_buffer.physical_address
  my_ip.register_map.profiling_offset_1  = profiling_buffer.physical_address
 
-  
+ print("SGRACE loaded and ready!") 
