@@ -23,9 +23,9 @@ Make sure you move the provided  bit and hwh files to the overlays directory wit
 
 3. If the notebook is set to training=0 only inference will be run. Set training to 1 to perform training as well. 
 
-The notebook is set to load model parameters from a file "models/model_photo_8bit.ptx". 
+3.1 If the notebook is set to load model parameters from a file "models/model_photo_8bit.ptx". 
 
-Make sure you store the provided model to the "models" directory.
+    Make sure you store the provided model to the "models" directory.
 
 4. The notebook uses neighborLoader to load subgraphs and perform inference on them. Accuracy is around 90% with this data set and configuration.  
 
