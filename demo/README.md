@@ -14,7 +14,7 @@ This library takes of all the interfacing and control of the hardware accelerato
 
 Therefore only minimum modifications are needed in the model itself to make use of the accelerator. 
 
-Create a directory like '/home/xilinx/jupyter_notebooks/sgrace_lib' and save sgrace.py and config.py in it.
+Create a directory like '/home/xilinx/jupyter_notebooks/sgrace_lib' and save sgrace.py (from directory sgrace_lib) and config.py in it.
 
 
 2. sgrace.py loads a FPGA bit file called gat_all_unsigned.bit. 
