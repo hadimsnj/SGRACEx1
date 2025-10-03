@@ -13,7 +13,7 @@ Boards supported include ultra96, rfsoc4x2, zcu104.
 
 
 
-3.We have also included below HLS source and steps correspond a basic SGRACE configuration with limited functionality. We hope to release more complete systems in the near future. 
+3.We have also included below HLS source and steps corresponding to a basic SGRACE configuration with limited functionality. 
 
 
 Steps to run full implementation with a base design with one thread and 2 compute units done with Linux Ubuntu.
