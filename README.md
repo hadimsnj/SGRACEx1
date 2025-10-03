@@ -1,8 +1,11 @@
-1.SGRACE is a high-performance dataflow architecture for graph convolutional and attention networks.
+1.SGRACE is a high-performance dataflow architecture for graph convolutional and attention networks that supports adaptive quantization and sparsity/pruning.
 
 You can find more information on SGRACE capabilities and performance here:
 
+
+SGRACE: Scalable Architecture for On-Device Inference and Training of Graph Attention and Convolutional Networks
 https://ieeexplore.ieee.org/document/11108959
+
 
 
 2.The DEMO directory includes bitstreams and python sources to test some of the capabilities of SGRACE.
@@ -10,7 +13,7 @@ Boards supported include ultra96, rfsoc4x2, zcu104.
 
 
 
-3. We have also included below HLS source and steps correspond a basic SGRACE configuration with limited functionality. 
+3.We have also included below HLS source and steps correspond a basic SGRACE configuration with limited functionality. We hope to release more complete systems in the near future. 
 
 
 Steps to run full implementation with a base design with one thread and 2 compute units done with Linux Ubuntu.
