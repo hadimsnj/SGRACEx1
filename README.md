@@ -6,6 +6,7 @@ https://ieeexplore.ieee.org/document/11108959
 
 
 2.The DEMO directory includes bitstreams and python sources to test some of the capabilities of SGRACE.
+Boards supported include ultra96, rfsoc4x2, zcu104. 
 
 
 
