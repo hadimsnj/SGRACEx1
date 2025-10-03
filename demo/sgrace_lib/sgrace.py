@@ -7,11 +7,46 @@ import numpy as np
 from pynq import get_rails, DataRecorder
 from scipy.sparse import coo_matrix
 from torch_geometric.utils import add_remaining_self_loops,add_self_loops,sort_edge_index,degree
+from torch_scatter import scatter_add
+
 
 import config
 
 
-#def quantization(x, s, z, alpha_q, beta_q):
+def sym_norm2(edge_index, num_nodes, edge_weight=None, fill=0, dtype=None):
+    if edge_weight is None:
+        edge_weight = torch.ones((edge_index.size(1), ), dtype=dtype, device=edge_index.device)
+
+    
+    # Calculate node degrees
+    node_degrees = degree(edge_index[1], num_nodes=num_nodes)
+
+    #print('max_degree')
+    #print(torch.max(node_degrees))
+
+    
+    #fill_value = math.trunc(math.log2(average_node_degree)) if not improved else 2
+    
+    #print("fill value")
+    #print(fill_value)
+    #fill_value = torch.max(node_degrees) if not improved else 2
+    #fill_value = 0 if not improved else 2 #32
+
+    
+    #edge_weight = torch.zeros((edge_index.size(1), ), dtype=dtype, device=edge_index.device)
+    
+    #print("edge index")
+    #print(edge_index)
+    edge_index, edge_weight = add_remaining_self_loops(edge_index, edge_weight, fill, num_nodes)
+    
+    edge_index, edge_weight = sort_edge_index(edge_index, edge_weight) #make sure that self loops are in order
+    
+    row, col = edge_index
+    deg = scatter_add(edge_weight, row, dim=0, dim_size=num_nodes)
+    deg_inv_sqrt = deg.pow(-0.5)
+    deg_inv_sqrt[deg_inv_sqrt == float('inf')] = 0
+    
+    return edge_index, deg_inv_sqrt[row] * edge_weight * deg_inv_sqrt[col]
 
 def quantization(x, s, z, alpha_q, beta_q):
 
@@ -127,6 +162,12 @@ def fake_quantization(x, s, z, deq, alpha_q, beta_q):
 
     x_r = np.round(1 / s * x + z, decimals=0)
     x_q = np.clip(x_r, a_min=alpha_q, a_max=beta_q)
+
+    #emulate hardware effects
+    #x_q = x_q << f_align
+    #x_q = x_q / (pow(2,(config.w_qbits-1)))
+     
+    #print(x_q) 
 
     x_q = x_q*deq #back to float
     
@@ -970,7 +1011,7 @@ class GATConv_SGRACE(Module):
     """
     GAT layer 
     """
-    def __init__(self, in_features, out_features, nheads, bias=True, dropout=0.2, alpha=0.2,concat=False):
+    def __init__(self, in_features, out_features, nheads=1, bias=True, dropout=0.2, alpha=0.2,concat=False):
         super(GATConv_SGRACE, self).__init__()
         self.in_features = in_features
         self.out_features = out_features
@@ -1090,48 +1131,48 @@ def init_SGRACE():
   beta_qu = 255
 
   #photo
-  global w_max
-  w_max = 1.0 
-  global w_min
-  w_min = -1.0 
-  global a_max
-  a_max = 1.0 
-  global w_max2
-  w_max2 = 1.0 
-  global w_min2
-  w_min2 = -1.0
-  global f_max2   
-  f_max2 = 4.0 
-  global f_max
-  f_max = 1.0 
-  global a_min
-  a_min = 0
-  global f_min
-  f_min = 0
-  global f_min2
-  f_min2 = 0
-  go_max = 0.10
-  go_min = -0.10
-
-  #cora
   #global w_max
-  #w_max = 0.3 #8 #citeseer/cora
+  #w_max = 1.0 
   #global w_min
-  #w_min = -0.3 #8 #citeseer/cora
+  #w_min = -1.0 
   #global a_max
-  #a_max = 0.5 #cora gcn/gat 8-bit
-  #w_max2 = 0.6 #citeseer/cora 4-bit/8-bit gcn/gat
-  #w_min2 = -0.6 #citeseer/cora 4-bit/8-bit gcn/gat  
-  #f_max2 = 1.0 #cora
+  #a_max = 1.0 
+  #global w_max2
+  #w_max2 = 1.0 
+  #global w_min2
+  #w_min2 = -1.0
+  #global f_max2   
+  #f_max2 = 4.0 
   #global f_max
-  #f_max = 1.0 #cox/ermd/dd/mutag
+  #f_max = 1.0 
   #global a_min
   #a_min = 0
   #global f_min
   #f_min = 0
+  #global f_min2
   #f_min2 = 0
   #go_max = 0.10
   #go_min = -0.10
+
+  #cora
+  global w_max
+  w_max = 0.3 #8 #citeseer/cora
+  global w_min
+  w_min = -0.3 #8 #citeseer/cora
+  global a_max
+  a_max = 0.5 #cora gcn/gat 8-bit
+  w_max2 = 0.6 #citeseer/cora 4-bit/8-bit gcn/gat
+  w_min2 = -0.6 #citeseer/cora 4-bit/8-bit gcn/gat  
+  f_max2 = 1.0 #cora
+  global f_max
+  f_max = 1.0 #cox/ermd/dd/mutag
+  global a_min
+  a_min = 0
+  global f_min
+  f_min = 0
+  f_min2 = 0
+  go_max = 0.10
+  go_min = -0.10
 
   #transformer gat
   #w_max = 1.0 #0.3 #8 #citeseer/cora
@@ -1196,10 +1237,14 @@ def init_SGRACE():
   #cora
   w_max = 0.1 #citeseer 4-bit/8-bit gcn/gat
   w_min = -0.1 #citeseer 4-bit/8-bit gcn/gat
+  w_max2 = 0.1 #citeseer 4-bit/8-bit gcn/gat
+  w_min2 = -0.1 #citeseer 4-bit/8-bit gcn/gat
   a_max = 0.1 #cora gcn/gat 8-bit
   a_min = 0.0 #in training the first tensor of the matrix could be negative. In inference is always positive.  
   f_max = 1.0 #cox/ermd/dd/mutag citeseer/cora
   f_min = 0.0 
+  f_max2 = 1.0 #cox/ermd/dd/mutag citeseer/cora
+  f_min2 = 0.0 
   go_max = 0.10
   go_min = -0.10
 
@@ -1207,13 +1252,17 @@ def init_SGRACE():
 
  elif(config.w_qbits == 1):
     
-  f_align = 6
+  f_align = 7
   w_max = 0.1 #cora 4-bit/8-bit gcn/gat
   w_min = -0.1 #cora 4-bit/8-bit gcn/gat
+  w_max2 = 0.1 #cora 4-bit/8-bit gcn/gat
+  w_min2 = -0.1 #cora 4-bit/8-bit gcn/gat
   a_max = 0.1 #cora gcn/gat 8-bit
   a_min = 0.0 #in training the first tensor of the matrix could be negative. In inference is always positive.  
   f_max = 1.0 #cox/ermd/dd/mutag
   f_min = 0.0 
+  f_max2 = 1.0 #cox/ermd/dd/mutag
+  f_min2 = 0.0 
   go_max = 0.10
   go_min = -0.10
 
@@ -1247,7 +1296,8 @@ def init_SGRACE():
  #if (config.hardware_quantize == 0):
  # config.values_fea_buffer = allocate(config.NNZ_fea, dtype=config.hard_type)
  #else:    
- values_fea_buffer = allocate(config.N_adj*64, dtype=config.float_type)  
+ #values_fea_buffer = allocate(config.N_adj*64, dtype=config.float_type)
+ values_fea_buffer = allocate(config.NNZ_fea, dtype=config.float_type)  
  
  global rowPtr_adj_buffer
  rowPtr_adj_buffer = allocate(config.NNZ_adj, dtype=np.int32)
@@ -1356,7 +1406,7 @@ def init_SGRACE():
     #int32bits = np.asarray(qsa, dtype=np.float32).view(np.int32).item() 
     #my_ip.register_map.quantization_scale_adj = int32bits
     #print("f align is ",f_align)
-    my_ip.register_map.f_align = f_align
+    my_ip.register_map.f_align = 0
     my_ip.register_map.beta_qu = 255
     internal_quantization =  16 #16 # 0x0000FFFF#bit QTYPE 32
   
@@ -1367,7 +1417,7 @@ def init_SGRACE():
     #my_ip.register_map.scale_fea = 3 #scale fea
     #deq_o=deq_o*pow(2, 2)
 
-    my_ip.register_map.f_align = f_align
+    my_ip.register_map.f_align = 4
     my_ip.register_map.beta_qu = 15
     internal_quantization =  8 #bit QTYPE 4
 
@@ -1380,31 +1430,30 @@ def init_SGRACE():
 
  #2-bit
  if (config.w_qbits == 2):
-    
-    my_ip.register_map.scale_fea = 1 #scale fea
-    deq_o=deq_o*pow(2, 1)   
+       
   
     if(config.min_output == 0):
      print("Deq factor ",deq_o)
     
-    int32bits = np.asarray(deq_o, dtype=np.float32).view(np.int32).item() 
-    my_ip.register_map.deq_factor = int32bits
-    qsf = 1/f_s
-    int32bits = np.asarray(qsf, dtype=np.float32).view(np.int32).item() 
-    my_ip.register_map.quantization_scale_fea = int32bits
-    qsw = 1/w_s
-    int32bits = np.asarray(qsw, dtype=np.float32).view(np.int32).item() 
-    my_ip.register_map.quantization_scale_w = int32bits
-    qsa = 1/a_s
-    int32bits = np.asarray(qsa, dtype=np.float32).view(np.int32).item() 
-    my_ip.register_map.quantization_scale_adj = int32bits
+    scale_fea = 1
+    scale_fea2 = 1
+    deq_o=deq_o*pow(2, 1)
+    deq_o2=deq_o2*pow(2, 1)
+    
     my_ip.register_map.beta_qu = 2
     my_ip.register_map.f_align = 6
-
-
     internal_quantization =  4
     
  if (config.w_qbits == 1):
+
+    scale_fea = 0
+    scale_fea2 = 0
+    deq_o=deq_o*pow(2, 0)
+    deq_o2=deq_o2*pow(2, 0)
+
+    my_ip.register_map.beta_qu = 1
+    my_ip.register_map.f_align = 7
+    internal_quantization =  2
      
     my_ip.register_map.scale_fea = 0 #scale fea
     deq_o=deq_o*pow(2, 0)   
@@ -1412,22 +1461,7 @@ def init_SGRACE():
     if(config.min_output == 0):
      print("Deq factor ",deq_o)
     
-    int32bits = np.asarray(deq_o, dtype=np.float32).view(np.int32).item() 
-    my_ip.register_map.deq_factor = int32bits
-    qsf = 1/f_s
-    int32bits = np.asarray(qsf, dtype=np.float32).view(np.int32).item() 
-    my_ip.register_map.quantization_scale_fea = int32bits
-    qsw = 1/w_s
-    int32bits = np.asarray(qsw, dtype=np.float32).view(np.int32).item() 
-    my_ip.register_map.quantization_scale_w = int32bits
-    qsa = 1/a_s
-    int32bits = np.asarray(qsa, dtype=np.float32).view(np.int32).item() 
-    my_ip.register_map.quantization_scale_adj = int32bits
-    my_ip.register_map.beta_qu = 1
-    my_ip.register_map.f_align = 7
-
-  
-    internal_quantization =  4
+ 
 
  #terminate IP configuration
 
