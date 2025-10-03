@@ -8,6 +8,7 @@ https://ieeexplore.ieee.org/document/11108959
 2.The DEMO directory includes bitstreams and python sources to test some of the capabilities of SGRACE.
 
 
+
 3. We have also included below HLS source and steps correspond a basic SGRACE configuration with limited functionality. 
 
 
