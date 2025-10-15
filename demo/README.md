@@ -67,11 +67,11 @@ To use the demo to emulate the hardware accelerator and explore quantization tar
 
 6. In this scenario there is no FPGA hardware bit files but the quantization/dequantization hardware stages are emulated in software. This is useful to explore possible quantization strategies and targets on a desktop computer or to generate pretrained models that can then be used by hardware. 
 
-7. Complete step 1 to setup the experiment. 
+7. Complete step 1 to setup the experiment. We will use the notebook located in the emulation directory to test this feature. 
 
-8. Check the value of emulation in config.py and select emulation target as either cpu or cuda. 
+8. Check the value of emulation in config.py and select emulation target as either cpu or cuda:0. (0 identifies your GPU number) 
 
-9. MAKE SURE that ACC is set to 0 since we are not going to use the hardware accelerator. 
+9. MAKE SURE that ACC is set to 0 in config.py since we are not going to use the hardware accelerator. 
 
 10. The hardware library makes it easy to use the emulation since the only key steps are:
 
@@ -100,10 +100,10 @@ To use the demo to emulate the hardware accelerator and explore quantization tar
  self.att2 = GATConv_SGRACE(dataset.num_node_features, hidden_channels,head_count,dropout=0.1, alpha=0.2, concat=False)
 
 
- 10.4 These steps very similar as in 5 but now instead of offloading to the FPGA all the processing happens on the CPU or GPU. The key variable is ACC in config.py the is now set to zero so all hardware processing is emulated in software. 
+ 10.4 These steps very similar as in 5 but now instead of offloading to the FPGA all the layer processing happens on the CPU or GPU including the quantization/dequantization functions. The key variable is ACC in config.py the is now set to zero so all hardware processing is emulated in software. 
 
 
-  
+11. These preparation steps have already been done in the demo_sgrace notebook located in the emulation directory. Open the notebook and run it in your desktop. Remember we are not use the FPGA board at all in emulation mode and just using your main desktop to run the notebook. The desktop emulation can use a CUDA GPU if available but this is not necessary.   
 
 
  
