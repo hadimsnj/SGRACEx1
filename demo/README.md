@@ -1,6 +1,6 @@
 SGRACE demo 
 
-To use the demo:
+To use the demo to test the hardware accelerator on the FPGA:
 
 1. Check lines in notebook demo_sgrace.ipynb
 
@@ -32,7 +32,7 @@ Make sure you move the provided  bit and hwh files to the overlays directory wit
 In demo_sgrace there is a setting full_graph that when set to 1 uses standard loader to process the whole graph together while setting at 0 uses neighborloader.
 Different datasets are possible from planetoid for full_graph 1 and Amazon for full_graph 0. 
 
-5. The hardware libary makes it easy to use the hardware since the only key steps are:
+5. The hardware library makes it easy to use the hardware since the only key steps are:
 
  5.1
 
@@ -57,6 +57,49 @@ Different datasets are possible from planetoid for full_graph 1 and Amazon for f
  with
 
  self.att2 = GATConv_SGRACE(dataset.num_node_features, hidden_channels,head_count,dropout=0.1, alpha=0.2, concat=False)
+
+
+To use the demo to emulate the hardware accelerator and explore quantization targets. 
+
+6. In this scenario there is no FPGA hardware bit files but the quantization/dequantization hardware stages are emulated in software. This is useful to explore possible quantization strategies and targets on a desktop computer or to generate pretrained models that can then be used by hardware. 
+
+7. Complete step 1 to setup the experiment. 
+
+8. Check the value of emulation in config.py and select emulation target as either cpu or cuda. 
+
+9. MAKE SURE that ACC is set to 0 since we are not going to use the hardware accelerator. 
+
+10. The hardware library makes it easy to use the emulation since the only key steps are:
+
+ 10.1
+
+ Import the hardware layers:
+
+ import config
+
+ from sgrace import init_SGRACE,GATConv_SGRACE, Relu_SGRACE
+
+ config.py contains important hardware settings like using attention (i.e GAT) or not (i.e. GCN). The quantization target for on-device training (i.e 8-bit downto 1-bit) etc.
+
+ 10.2
+
+ Use in the notebook init_sgrace to initialize the emulation.
+
+ 10.3
+
+ replace pytorch software layers with hardware layers like:
+
+ self.att1 = GATConv(dataset.num_node_features, hidden_channels)
+
+ with
+
+ self.att2 = GATConv_SGRACE(dataset.num_node_features, hidden_channels,head_count,dropout=0.1, alpha=0.2, concat=False)
+
+
+ 10.4 These steps very similar as in 5 but now instead of offloading to the FPGA all the processing happens on the CPU or GPU. The key variable is ACC in config.py the is now set to zero so all hardware processing is emulated in software. 
+
+
+  
 
 
  
