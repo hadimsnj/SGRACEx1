@@ -67,13 +67,25 @@ Different datasets are possible from planetoid for full_graph 1 and Amazon for f
 
 **EMULATION MODE**
 
-To use the demo to emulate the hardware accelerator and explore quantization targets. 
+To use the demo to emulate the hardware accelerator and explore quantization targets. The steps below have been already prepared in the demo_sgrace.py located in the emulation directory 
 
 **6. In this scenario the FPGA hardware bit files are not used but the quantization/dequantization hardware stages are emulated in software.**
 
 This is useful to explore possible quantization strategies and targets on a desktop computer or to generate pretrained models that can then be used by hardware. Make sure that **fake_quantization** is set to 1 in config.py so the quantization processes are emulated in software. If **fake_quantization** is set to 0 then floating-point precision is used.
 
-**7. Complete the previous step 1 to setup the experiment.**
+**7. Check lines in notebook demo_sgrace.ipynb**
+
+import sys
+
+sys.path.insert(1, '/media/josnu02/hd1/josnu02/cuda_performance/sgrace_lib'))
+
+This lines indicate where the sgrace hardware library files are stored. 
+
+This library takes of all the interfacing and control of the hardware accelerator. 
+
+Therefore only minimum modifications are needed in the model itself to make use of the accelerator. 
+
+Create a directory like to your preferred location in your system and modify '/media/josnu02/hd1/josnu02/cuda_performance/sgrace_lib' accordingly. Save sgrace.py (from directory sgrace_lib) and config.py in it.
 
 We will use the python script located in the emulation directory to test the emulation mode. 
 
@@ -96,7 +108,7 @@ We will use the python script located in the emulation directory to test the emu
 
 10.2
 
- Use in the notebook init_sgrace to initialize the emulation mode.
+ Use init_sgrace to initialize the emulation mode.
 
 10.3
 
