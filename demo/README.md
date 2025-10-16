@@ -69,19 +69,19 @@ Different datasets are possible from planetoid for full_graph 1 and Amazon for f
 
 To use the demo to emulate the hardware accelerator and explore quantization targets. 
 
-** 6. In this scenario the FPGA hardware bit files are not used but the quantization/dequantization hardware stages are emulated in software. **
+**6. In this scenario the FPGA hardware bit files are not used but the quantization/dequantization hardware stages are emulated in software.**
 
 This is useful to explore possible quantization strategies and targets on a desktop computer or to generate pretrained models that can then be used by hardware. Make sure that **fake_quantization** is set to 1 in config.py so the quantization processes are emulated in software. If **fake_quantization** is set to 0 then floating-point precision is used.
 
-** 7. Complete the previous step 1 to setup the experiment. **
+**7. Complete the previous step 1 to setup the experiment.**
 
 We will use the python script located in the emulation directory to test the emulation mode. 
 
-** 8. Check the value of **device** in config.py and select emulation target as either cpu or cuda:0. (0 identifies your GPU number) **
+**8. Check the value of **device** in config.py and select emulation target as either cpu or cuda:0. (0 identifies your GPU number)**
 
-** 9. MAKE SURE that **acc** is set to 0 in config.py since we are not going to use the hardware accelerator.  **
+**9. MAKE SURE that **acc** is set to 0 in config.py since we are not going to use the hardware accelerator.**
 
-** 10. The hardware library makes it easy to use the emulation since the only key steps are:**
+**10. The hardware library makes it easy to use the emulation since the only key steps are:**
 
 10.1
 
