@@ -46,9 +46,10 @@ Different datasets are possible from planetoid for full_graph 1 and Amazon for f
  from sgrace import init_SGRACE,GATConv_SGRACE, Relu_SGRACE
 
  config.py contains important hardware settings like using attention (i.e GAT) or not (i.e. GCN). The quantization target for hardware-aware training (i.e 8-bit down to 1-bit) etc.
- sgrace.py contains important setting for tensor thresholds and internal scaling for each quantization target. You can examine those searching sgrace.py for w_qbits == x where x is your   quantization target (e.g. 8) 
+ sgrace.py contains important setting for tensor thresholds and internal scaling for each quantization target. You can examine those searching sgrace.py for **w_qbits == x** where x is your   quantization target (e.g. 8) 
 
- In config.py to use the hardware accelerator the variable acc needs to be set to one and device needs to be set to cpu (This is the ARM cpu available on the FPGA board).  
+ In config.py to use the hardware accelerator the variable **acc** needs to be set to one and **device** needs to be set to cpu (This is the ARM cpu available on the FPGA board). The ARM cpu will run the model and offload layer processing to the FPGA accelerator automatically. 
+  
  
 5.2
 
@@ -68,13 +69,13 @@ Different datasets are possible from planetoid for full_graph 1 and Amazon for f
 
 To use the demo to emulate the hardware accelerator and explore quantization targets. 
 
-6. In this scenario there is no FPGA hardware bit files but the quantization/dequantization hardware stages are emulated in software. This is useful to explore possible quantization strategies and targets on a desktop computer or to generate pretrained models that can then be used by hardware. 
+6. In this scenario the FPGA hardware bit files are not used but the quantization/dequantization hardware stages are emulated in software. This is useful to explore possible quantization strategies and targets on a desktop computer or to generate pretrained models that can then be used by hardware. Make sure that **fake_quantization** is set to 1 in config.py so the quantization processes are emulated in software. If **fake_quantization** is set to 0 then floating-point precision is used.
 
-7. Complete step 1 to setup the experiment. We will use the notebook located in the emulation directory to test this feature. 
+7. Complete the previous step 1 to setup the experiment. We will use the python script located in the emulation directory to test the emulation mode. 
 
-8. Check the value of device in config.py and select emulation target as either cpu or cuda:0. (0 identifies your GPU number) 
+8. Check the value of **device** in config.py and select emulation target as either cpu or cuda:0. (0 identifies your GPU number) 
 
-9. MAKE SURE that acc is set to 0 in config.py since we are not going to use the hardware accelerator.  MAKE SURE that fake_quantization is set to 1 in config.py so the quantization processes are emulated in software.
+9. MAKE SURE that **acc** is set to 0 in config.py since we are not going to use the hardware accelerator.  
 
 10. The hardware library makes it easy to use the emulation since the only key steps are:
 
@@ -87,7 +88,7 @@ To use the demo to emulate the hardware accelerator and explore quantization tar
  from sgrace import init_SGRACE,GATConv_SGRACE, Relu_SGRACE
 
  config.py contains important hardware settings like using attention (i.e GAT) or not (i.e. GCN). The quantization target for hardware-aware training (i.e 8-bit down to 1-bit) etc.
- sgrace.py contains important setting for tensor thresholds and internal scaling for each quantization target. You can examine those searching sgrace.py for w_qbits == x where x is your   quantization target (e.g. 8). 
+ sgrace.py contains important setting for tensor thresholds and internal scaling for each quantization target. You can examine those searching sgrace.py for **w_qbits == x** where x is your   quantization target (e.g. 8). 
 
  10.2
 
@@ -104,10 +105,10 @@ To use the demo to emulate the hardware accelerator and explore quantization tar
  self.att2 = GATConv_SGRACE(dataset.num_node_features, hidden_channels,head_count,dropout=0.1, alpha=0.2, concat=False)
 
 
- 10.4 These steps very similar as in 5 but now instead of offloading to the FPGA all the layer processing happens on the CPU or GPU including the quantization/dequantization functions. The key variable is acc in config.py the is now set to zero so all hardware processing is emulated in software. 
+ 10.4 These steps very similar as in 5 but now instead of offloading to the FPGA all the layer processing happens on the CPU or GPU including the quantization/dequantization functions. The key variables are **acc** in config.py the is now set to zero and **fake_quantization** set to one so all hardware processing is emulated in software. 
 
 
-11. All these preparation steps have already been done in the demo_sgrace.py located in the emulation directory. Run the emulation mode demonstration in your desktop with python3 demo_sgrace.py. Remember we are not use the FPGA board at all in emulation mode and just using your main desktop to run the model. The desktop emulation can use a CUDA GPU (if available) changing the device setting in config.py but this is not necessary.   
+11. All these preparation steps have already been done in the demo_sgrace.py located in the emulation directory. Run the emulation mode demonstration in your desktop with python3 demo_sgrace.py. Remember we are not use the FPGA board at all in emulation mode and just using your main desktop to run the model. The desktop emulation can use a CUDA GPU (if available) changing the device setting in config.py but this is not necessary.    
 
 
  
