@@ -17,7 +17,7 @@ This library takes of all the interfacing and control of the hardware accelerato
 
 Therefore only minimum modifications are needed in the model itself to make use of the accelerator. 
 
-Create a directory like '/home/xilinx/jupyter_notebooks/sgrace_lib' and save sgrace.py (from directory sgrace_lib) and config.py in it.
+Create a directory like '/home/xilinx/jupyter_notebooks/sgrace_lib' and save sgrace.py (from directory sgrace_lib) and config.py (from your board directory) in it.
 
 
 **2. sgrace.py loads a FPGA bit file called gat_all_unsigned.bit.**
@@ -85,7 +85,7 @@ This library takes of all the interfacing and control of the hardware accelerato
 
 Therefore only minimum modifications are needed in the model itself to make use of the accelerator. 
 
-Create a directory like to your preferred location in your system and modify '/media/josnu02/hd1/josnu02/cuda_performance/sgrace_lib' accordingly. Save sgrace.py (from directory sgrace_lib) and config.py in it.
+Create a directory like to your preferred location in your system and modify '/media/josnu02/hd1/josnu02/cuda_performance/sgrace_lib' accordingly. Save sgrace.py (from directory sgrace_lib) and config.py (from directory emulation) in it.
 
 We will use the python script located in the emulation directory to test the emulation mode. 
 
