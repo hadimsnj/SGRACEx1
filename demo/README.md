@@ -128,7 +128,11 @@ The key variables are **acc** in config.py the is now set to zero and **fake_qua
 
 **11. All these preparation steps for emulation have already been done in the demo_sgrace.py located in the emulation directory.** 
 
-Run the emulation mode demonstration in your desktop with python3 demo_sgrace.py. Remember we are not use the FPGA board at all in emulation mode and just using your main desktop to run the model. The desktop emulation can use a CUDA GPU (if available) changing the device setting in config.py but this is not necessary.    
+Run the emulation mode demonstration in your desktop with python3 demo_sgrace.py. Remember we are not use the FPGA board at all in emulation mode and just using your main desktop to run the model. The desktop emulation can use a CUDA GPU (if available) changing the device setting in config.py but this is not necessary.   
+
+The model runs and starts training for 200 epochs. The best accuracy achieved is around 0.85 on the cora dataset with 8-bits. The script also tries to display some plots on weight distribution but if the plotting part is not working then this part can be disable.  
+
+
 
 
  
