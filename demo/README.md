@@ -1,7 +1,7 @@
-#SGRACE demo 
+**SGRACE demo** 
 
 
-##HARDWARE MODE
+**HARDWARE MODE**
 
 To use the demo to test the hardware accelerator on the FPGA:
 
@@ -64,7 +64,7 @@ Different datasets are possible from planetoid for full_graph 1 and Amazon for f
 
  self.att2 = GATConv_SGRACE(dataset.num_node_features, hidden_channels,head_count,dropout=0.1, alpha=0.2, concat=False)
 
-##EMULATION MODE
+**EMULATION MODE**
 
 To use the demo to emulate the hardware accelerator and explore quantization targets. 
 
