@@ -29,7 +29,7 @@ print("Device is ",config.device)
 
 device = config.device
 
-config.w_qbits = 8
+
 # the node degree is calculate in adj and if a row has a node degree of zero then the features of the node are set to zero.
 # I thought that for deep quantization there will be more rows at zero but this is not the case. The normalization
 # seems to make the adj values higher and then after quantization there are still not zero. This is problaby not a bad thing since 
