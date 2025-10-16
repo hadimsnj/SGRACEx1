@@ -109,7 +109,7 @@ with
  self.att2 = GATConv_SGRACE(dataset.num_node_features, hidden_channels,head_count,dropout=0.1, alpha=0.2, concat=False)
 
 
-**10.4 The previous steps very similar as in 5 but now instead of offloading to the FPGA all the layer processing happens on the CPU or GPU including the quantization/dequantization functions.** 
+10.4 The previous steps very similar as in 5 but now instead of offloading to the FPGA all the layer processing happens on the CPU or GPU including the quantization/dequantization functions. 
 
 The key variables are **acc** in config.py the is now set to zero and **fake_quantization** set to one so all hardware processing is emulated in software. 
 
