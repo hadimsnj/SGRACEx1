@@ -1136,7 +1136,7 @@ from torch.nn import LeakyReLU
 from scipy.sparse import csr_matrix
 import math
 import time
-from pynq import allocate
+
 import torch.nn.functional as F
 import numpy as np
 
