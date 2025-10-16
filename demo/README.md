@@ -24,13 +24,13 @@ Create a directory like '/home/xilinx/jupyter_notebooks/sgrace_lib' and save sgr
 
 Make sure you move the provided  bit and hwh files to the overlays directory with the correct name.
 
-**3. If the notebook is set to training=0 only inference will be run. Set training to 1 to perform training as well. **
+**3. If the notebook is set to training=0 only inference will be run. Set training to 1 to perform training as well.**
 
     If the notebook is set to load model parameters from a file such as "models/model_photo_8bit.ptx". 
 
     Make sure you store the provided model to the "models" directory.
 
-**4. The notebook uses neighborLoader to load subgraphs and perform inference on them. Accuracy is around 90% with this data set and configuration.  **
+**4. The notebook uses neighborLoader to load subgraphs and perform inference on them. Accuracy is around 90% with this data set and configuration.**
 
 In demo_sgrace there is a setting full_graph that when set to 1 uses standard loader to process the whole graph together while setting at 0 uses neighborloader.
 Different datasets are possible from planetoid for full_graph 1 and Amazon for full_graph 0. 
