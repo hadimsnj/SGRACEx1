@@ -132,7 +132,10 @@ Run the emulation mode demonstration in your desktop with python3 demo_sgrace.py
 
 The model runs and starts training for 100 epochs. The best accuracy achieved is around 0.86 on the cora dataset with 8-bits. The script also tries to display some plots on weight distribution but if the plotting part is not working then this part can be disable.  
 
-![screenshot](weights1.png)
+<p align="center">
+    <img src="weights1.png" alt="Description" width="100">
+</p>
+
 
 
 
