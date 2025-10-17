@@ -130,12 +130,15 @@ The key variables are **acc** in config.py the is now set to zero and **fake_qua
 
 Run the emulation mode demonstration in your desktop with python3 demo_sgrace.py. Remember we are not use the FPGA board at all in emulation mode and just using your main desktop to run the model. The desktop emulation can use a CUDA GPU (if available) changing the device setting in config.py but this is not necessary.   
 
-The model runs and starts training for 100 epochs. The best accuracy achieved is around 0.86 on the cora dataset with 8-bits. The script also tries to display some plots on weight distribution but if the plotting part is not working then this part can be disable.  The image below shows the distribution of the 8-bit weights for the first layer.
+The model runs and starts training for 100 epochs. The best accuracy achieved is around 0.86 on the cora dataset with 8-bits. The script also tries to display some plots on weight distribution but if the plotting part is not working then this part can be disable.  The left image below shows the distribution of the 8-bit weights for the first layer.
+
+As a follow up test edit the config.py file and set w_qbits to 1 so all parameters are quantized to a single bit. Run the training again and in this occasion the accuracy is around 0.81. The right image below shows the weight distribution for weights -1/1.  With this quantization target adjacency and features are quantized to 0/1.
 
 
-<img width="1000" height="1000" alt="weights1" src="https://github.com/user-attachments/assets/8d6f802f-83c1-4ccf-8c23-3d9bba36a612" />
-
-As a follow up test edit the config.py file and set w_qbits to 1 so all parameters are quantized to a single bit. Run the training again and in this occasion the accuracy is around 0.81. The picture below shows the weight distribution for weights -1/1.  With this quantization target adjacency and features are quantized to 0/1.
+<p float="middle">
+  <img src="https://github.com/user-attachments/assets/8d6f802f-83c1-4ccf-8c23-3d9bba36a612" width="500" />
+  <img src="https://github.com/user-attachments/assets/ee6bc901-4799-4c23-bcba-a3dd8702cfcb" width="500" /> 
+</p>
 
 
 
