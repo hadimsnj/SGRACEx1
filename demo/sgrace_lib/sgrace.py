@@ -1225,8 +1225,8 @@ class GATConv_SGRACE(Module):
          values_fea_buffer[0:nnz_fea] = values_np
 
         else:
-         #xaux = input.detach().numpy()
-         xaux = input
+         xaux = input.detach().numpy()
+         #xaux = input
          xaux = xaux.reshape(1,xaux.shape[0]*xaux.shape[1])
          #values_fea_buffer[0:xaux.shape[0]*xaux.shape[1]] = xaux.astype(config.float_type)# *  (2**f_align)
          values_fea_buffer[0:xaux.shape[0]*xaux.shape[1]] = xaux
