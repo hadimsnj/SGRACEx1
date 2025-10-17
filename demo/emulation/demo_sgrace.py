@@ -29,7 +29,6 @@ print("Device is ",config.device)
 
 device = config.device
 
-
 # the node degree is calculate in adj and if a row has a node degree of zero then the features of the node are set to zero.
 # I thought that for deep quantization there will be more rows at zero but this is not the case. The normalization
 # seems to make the adj values higher and then after quantization there are still not zero. This is problaby not a bad thing since 
@@ -43,7 +42,7 @@ training = 1
 preload = 0 # preload a trained model. Use a low learning rate to just tune the weights.
 
 batch_value = 128 #not relevant in planetoid that is a single graph, relevant for Amazon
-num_epochs = 200 
+num_epochs = 100 
 
 #gnn max size
 
@@ -623,12 +622,14 @@ for epoch in range(10):
 # In[7]:
 
 
-print(best_acc)
+
 
 
 # In[8]:
 
-
+import matplotlib as mpl
+mpl.use('Agg')
+#import matplotlib.pyplot as plt
 from matplotlib import pyplot as plt
 from torch_geometric.data import Data
 from torch_geometric.utils import to_networkx
@@ -640,7 +641,8 @@ import sgrace
 #print(B_buffer[0:(dataset.num_features*16)])
 
 
-    
+print("creating histogram")    
+
 
 ##dense_adj = adj.to_dense()
 #dense_adj[dense_adj > 0] = 1
@@ -731,15 +733,27 @@ y_q = y #quantization_qbits(y,w_s,w_z,w_qbits)
 #print("Number of selected value")
 #print(np.count_nonzero(y == -8))
 
+
+
 plt.figure(figsize=(10, 10))
 plt.xlabel('Weights L1')
 plt.ylabel('Frequency')
 #counts, bins, bars = plt.hist(y, bins=256)
-counts, bins, bars = plt.hist(y_q,mybins)
+
+y_q = y_q.int()
+
+
+counts, bins, bars = plt.hist(y_q.flatten(),mybins)
+
 #plt.yticks(np.arange(0, 12000, step=500))
 #plt.xticks(mybins,horizontalalignment='center',fontsize=12,rotation=90)
 plt.xticks(mybins[::8],horizontalalignment='right',fontsize=12,rotation=90)
-plt.show()
+
+
+
+
+plt.savefig('./weights1.png')
+#plt.show()
 
 #plt.bar(y_q,mybins, align='center')
 #plt.gca().set_xticks(labels)
@@ -776,21 +790,22 @@ plt.figure(figsize=(10, 10))
 plt.xlabel('Weights L2')
 plt.ylabel('Frequency')
 #counts, bins, bars = plt.hist(y, bins=256)
-counts, bins, bars = plt.hist(y_q,mybins)
+counts, bins, bars = plt.hist(y_q.flatten(),mybins)
 #plt.yticks(np.arange(0, 12000, step=500))
 #plt.xticks(mybins,horizontalalignment='center',fontsize=12,rotation=90)
 plt.xticks(mybins[::8],horizontalalignment='center',fontsize=12,rotation=90)
-plt.show()
+plt.savefig('./weights2.png')
+#plt.show()
 
 print('max/min weight')
 print(torch.max(model.conv22.weight.data))
 print(torch.min(model.conv22.weight.data))
 
-print("MAX FEA INTERNAL VALUE layer 1", cur_max_fea)
-print("MAX FEA INTERNAL VALUE layer 2", cur_max_fea2)
-print("Use this to adjust your hardware ITYPE width")
-print("Current attention is:")
-print(attention_buffer)
+#print("MAX FEA INTERNAL VALUE layer 1", cur_max_fea)
+#print("MAX FEA INTERNAL VALUE layer 2", cur_max_fea2)
+#print("Use this to adjust your hardware ITYPE width")
+#print("Current attention is:")
+#print(attention_buffer)
 #print(bins)
 #print(counts)
 
