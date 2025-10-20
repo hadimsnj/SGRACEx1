@@ -501,21 +501,23 @@ class FPYNQ_GAT(torch.autograd.Function):
           output_e_val = E_buffer[0:nnz_adj].astype(config.float_type)
           output_s_val = S_buffer[0:nnz_adj].astype(config.float_type) #you should use this
         
+
+
          max_fea = my_ip.register_map.max_fea
          if(config.min_output == 0):
           print("MAX FEA INT GAT")
           print(max_fea)
           print(float(max_fea)/(2**frac_bits_o))
 
-
+         max_fea_float = float(max_fea)/(2**frac_bits_o)
          if (layern == 1):
           global cur_max_fea
-          if(max_fea > cur_max_fea):
-           cur_max_fea = max_fea
+          if(max_fea_float > cur_max_fea):
+           cur_max_fea = max_fea_float
          else:
           global cur_max_fea2
-          if(max_fea > cur_max_fea2):
-           cur_max_fea2 = max_fea
+          if(max_fea_float > cur_max_fea2):
+           cur_max_fea2 = max_fea_float
         
 
          output_acc = output_acc.reshape(input.shape[0],weights.shape[1]) 
@@ -1136,7 +1138,7 @@ from torch.nn import LeakyReLU
 from scipy.sparse import csr_matrix
 import math
 import time
-
+from pynq import allocate
 import torch.nn.functional as F
 import numpy as np
 
@@ -1225,7 +1227,10 @@ class GATConv_SGRACE(Module):
          values_fea_buffer[0:nnz_fea] = values_np
 
         else:
-         xaux = input.detach().numpy()
+         if(config.device=="cpu"):   
+          xaux = input.detach().numpy()
+         else:
+          xaux = input
          #xaux = input
          xaux = xaux.reshape(1,xaux.shape[0]*xaux.shape[1])
          #values_fea_buffer[0:xaux.shape[0]*xaux.shape[1]] = xaux.astype(config.float_type)# *  (2**f_align)
@@ -1319,6 +1324,45 @@ def init_SGRACE():
   #go_max = 0.10
   #go_min = -0.10
 
+  #cora
+  global w_max
+  w_max = 1.0 #8 #citeseer/cora
+  global w_min
+  w_min = -1.0 #8 #citeseer/cora
+  global a_max
+  a_max = 1.0 #cora gcn/gat 8-bit
+  w_max2 = 1.0 #citeseer/cora 4-bit/8-bit gcn/gat
+  w_min2 = -1.0 #citeseer/cora 4-bit/8-bit gcn/gat  
+  f_max2 = 1.0 #cora
+  global f_max
+  f_max = 1.0 #cox/ermd/dd/mutag
+  global a_min
+  a_min = 0
+  global f_min
+  f_min = 0
+  f_min2 = 0
+  go_max = 0.10
+  go_min = -0.10
+
+  #weibo
+  #global w_max
+  #w_max = 1.0 #8 #citeseer/cora
+  #global w_min
+  #w_min = -1.0 #8 #citeseer/cora
+  #global a_max
+  #a_max = 1.0 #cora gcn/gat 8-bit
+  #w_max2 = 1.0 #citeseer/cora 4-bit/8-bit gcn/gat
+  #w_min2 = -1.0 #citeseer/cora 4-bit/8-bit gcn/gat  
+  #f_max2 = 1.0 #cora
+  #global f_max
+  #f_max = 1.0 #cox/ermd/dd/mutag
+  #global a_min
+  #a_min = 0
+  #global f_min
+  #f_min = 0
+  #f_min2 = 0
+  #go_max = 0.10
+  #go_min = -0.10
 
   #enrom
   #global w_max
@@ -1341,24 +1385,24 @@ def init_SGRACE():
   #go_min = -0.10
 
   #cora
-  global w_max
-  w_max = 0.3 #8 #citeseer/cora
-  global w_min
-  w_min = -0.3 #8 #citeseer/cora
-  global a_max
-  a_max = 0.5 #cora gcn/gat 8-bit
-  w_max2 = 0.6 #citeseer/cora 4-bit/8-bit gcn/gat
-  w_min2 = -0.6 #citeseer/cora 4-bit/8-bit gcn/gat  
-  f_max2 = 1.0 #cora
-  global f_max
-  f_max = 1.0 #cox/ermd/dd/mutag
-  global a_min
-  a_min = 0
-  global f_min
-  f_min = 0
-  f_min2 = 0
-  go_max = 0.10
-  go_min = -0.10
+  #global w_max
+  #w_max = 0.3 #8 #citeseer/cora
+  #global w_min
+  #w_min = -0.3 #8 #citeseer/cora
+  #global a_max
+  #a_max = 0.5 #cora gcn/gat 8-bit
+  #w_max2 = 0.6 #citeseer/cora 4-bit/8-bit gcn/gat
+  #w_min2 = -0.6 #citeseer/cora 4-bit/8-bit gcn/gat  
+  #f_max2 = 1.0 #cora
+  #global f_max
+  #f_max = 1.0 #cox/ermd/dd/mutag
+  #global a_min
+  #a_min = 0
+  #global f_min
+  #f_min = 0
+  #f_min2 = 0
+  #go_max = 0.10
+  #go_min = -0.10
 
   #transformer gat
   #w_max = 1.0 #0.3 #8 #citeseer/cora
@@ -1499,8 +1543,10 @@ def init_SGRACE():
  frac_bits = 8
  out_type = np.int32
  config.float_type = np.float32
- cur_max_fea=0 #keep track of max internal value seen during training
- cur_max_fea2=0 #keep track of max internal value seen during training
+ global cur_max_fea
+ cur_max_fea=0.0 #keep track of max internal value seen during training
+ global cur_max_fea2
+ cur_max_fea2=0.0 #keep track of max internal value seen during training
 
 
  global attention_buffer
@@ -1650,8 +1696,9 @@ def init_SGRACE():
  global internal_quantization 
  #8-bit 
  if (config.w_qbits == 8):   
-    scale_fea = 3 #scale fea
-    scale_fea2 = 3
+    #weibo
+    scale_fea = 4 #scale fea
+    scale_fea2 = 4
     deq_o=deq_o*pow(2, 1) #cora 8-bit gcn/gat
     deq_o2=deq_o2*pow(2, 1) #2c#cora 8-bit gcn/gat
 
@@ -1722,11 +1769,18 @@ def init_SGRACE():
     #deq_o=deq_o*pow(2, 3)
     #deq_o2=deq_o2*pow(2,3)
 
-    #emron
-    scale_fea = 4
-    scale_fea2 = 4
+    
+    #weibo
+    scale_fea = 3
+    scale_fea2 = 3
     deq_o=deq_o*pow(2, 1)
     deq_o2=deq_o2*pow(2,1)
+
+    #emron
+    #scale_fea = 4
+    #scale_fea2 = 4
+    #deq_o=deq_o*pow(2, 1)
+    #deq_o2=deq_o2*pow(2,1)
 
     #photo
     #scale_fea = 6
@@ -1747,12 +1801,18 @@ def init_SGRACE():
     #scale_fea2 = 3
     #deq_o=deq_o*pow(2, 3)
     #deq_o2=deq_o2*pow(2, 3)
-    
-    #emron
-    scale_fea = 2
-    scale_fea2 = 2
+
+    #weibo
+    scale_fea = 3
+    scale_fea2 = 3
     deq_o=deq_o*pow(2, 1)
     deq_o2=deq_o2*pow(2,1)
+    
+    #emron
+    #scale_fea = 2
+    #scale_fea2 = 2
+    #deq_o=deq_o*pow(2, 1)
+    #deq_o2=deq_o2*pow(2,1)
 
     if(config.acc==1):
      my_ip.register_map.beta_qu = 2

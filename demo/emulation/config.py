@@ -25,7 +25,7 @@ M_fea = 2048 #max number of input features
 P_w =  hidden_channels #hid number hidden chnnels
 NNZ_adj = 1000000 # max number of non-zero values of adjacency
 NNZ_fea = 4000000 # max number of non-zero values of feature
-w_qbits = 8
+w_qbits = 1
 
 #global hard_type
 #hard_type = np.int8
