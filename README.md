@@ -59,19 +59,37 @@ or
 
 **source <path to tools>/Xilinx/Vitis/2022.1/settings64-Vitis.sh**
 
+
 edit matrix.h located the in the src directory and modify the following lines if needed:
+
+Recommended settings for a board like a rfsoc2x2:
 
 #define MAX_N    4096 // max number of input nodes in the graph. For example the cora dataset has 2708 nodes
 
-#define MAX_M    2048 // max number of features in each input node. For example the cora dataset has 1433 features per node;
+#define MAX_M    4096 // max number of features in each input node. For example the cora dataset has 1433 features per node;
 
-#define MAX_P    16  // number of hidden channels. 
+#define MAX_P    64  // number of hidden channels. 
 
+#define LINEAR_ENABLE 1
 
 To enable the attention engine set GAT_ENABLE to 1 
 #define GAT_ENABLE 1 //implement support for GAT
 
-Now go to the hardware directory and perform simulation, C synthesis (optional cosimulation check the script cosim command) with this command:
+
+Recommended settings for a board like a ultra96v2:
+
+#define MAX_N    4096 // max number of input nodes in the graph. For example the cora dataset has 2708 nodes
+
+#define MAX_M    4096 // max number of features in each input node. For example the cora dataset has 1433 features per node;
+
+#define MAX_P    16  // number of hidden channels. 
+
+#define LINEAR_ENABLE 1
+
+#define GAT_ENABLE 0 //disable support for GAT
+
+After performing configuration go to the hardware directory and perform simulation, C synthesis (optional cosimulation check the script cosim command) with this command:
+
 
 **vitis_hls -f ./script.tcl**
 
@@ -83,10 +101,15 @@ HLS simulation should report that the results match.
 
 Once HLS synthesis and IP export has completed launch implementation and bitstream generation with this command:
 
+if you are using Vivado 2022.1
+
+**vivado -mode batch -source ./project_3.tcl**
+
+if you are using Vivado 2025.2
 
 **vivado -mode batch -source ./project_1.tcl**
 
-Optionally modify this line as needed in project_1.tcl to set a new project name/directory 
+Optionally modify this line as needed in project_1.tcl/project_3.tcl to set a new project name/directory 
 
 **set _xil_proj_name_ "vivado"**
 
